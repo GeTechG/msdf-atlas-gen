@@ -1,0 +1,82 @@
+name: Binaries
+on:
+  push:
+    branches: [master]
+  # Build any other commit on demand (pick the branch in "Run workflow").
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # The build key: the last commit that touches code (a path outside .github/infra-paths) or the build
+  # recipe. Consumers compute it by the same rule to find the file, so an infrastructure push builds nothing.
+  key:
+    runs-on: ubuntu-24.04
+    outputs:
+      key: ${{ steps.key.outputs.key }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the build key is found in the history
+
+      - name: Find the build key
+        id: key
+        run: |
+          mapfile -t infra < <(sed -e '/^#/d' -e '/^$/d' -e '/^\.github\/build-linux\.sh$/d' \
+            -e 's/^/:(top,exclude,literal)/' .github/infra-paths)
+          key=$(git log -1 --format=%H HEAD -- . "${infra[@]}")
+          [ -n "$key" ] || { echo "::error::no code commit in the history of $GITHUB_SHA"; exit 1; }
+          echo "build key $key"
+          echo "key=$key" >> "$GITHUB_OUTPUT"
+
+  linux64:
+    needs: key
+    runs-on: ubuntu-24.04
+    # One run per key at a time: a push that keeps the key waits for the build in flight, then finds its file.
+    concurrency: binaries-${{ needs.key.outputs.key }}
+    env:
+      KEY: ${{ needs.key.outputs.key }}
+    steps:
+      # `msdf-atlas-gen -version` names the commit that is checked out: build the key commit, not the pushed head.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.key.outputs.key }}
+          submodules: true
+
+      - name: Skip when the key already has a build
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view builds --json assets -q '.assets[].name' 2>/dev/null | grep -qx "msdf-atlas-gen-linux64-$KEY.tar.gz"; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # vcpkg binary cache: Skia takes most of the build time
+      - name: Cache vcpkg packages
+        if: steps.existing.outputs.found != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/msdf-atlas-gen-vcpkg
+          key: ${{ runner.os }}-${{ runner.arch }}-vcpkg-${{ hashFiles('vcpkg.json', '.github/build-linux.sh') }}
+          restore-keys: ${{ runner.os }}-${{ runner.arch }}-vcpkg-
+
+      - name: Build
+        if: steps.existing.outputs.found != 'true'
+        run: .github/build-linux.sh
+
+      # One release for all builds, one file per build key; its single tag follows the latest build.
+      # No --clobber: consumers pin the checksum of a published file, and a rebuild would change it.
+      - name: Publish the build of the key
+        if: steps.existing.outputs.found != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          asset="out/msdf-atlas-gen-linux64-$KEY.tar.gz"
+          mv out/msdf-atlas-gen-linux64.tar.gz "$asset"
+          sha256sum "$asset"
+          git push -f origin "$KEY:refs/tags/builds"
+          gh release view builds >/dev/null 2>&1 || gh release create builds --verify-tag \
+            --title "msdf-atlas-gen builds" --notes "Linux x86_64 builds with Skia, one file per build key: msdf-atlas-gen-linux64-<key>.tar.gz"
+          gh release upload builds "$asset"
