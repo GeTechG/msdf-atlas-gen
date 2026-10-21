@@ -26,7 +26,7 @@ fi
 # Inside the container, as root: hand everything written to /src and /cache back to the caller on exit
 trap 'chown -R "$OWNER" /src/build /src/out /cache 2>/dev/null || true' EXIT
 
-dnf install -y zip
+dnf install -y --disablerepo=epel zip # base repositories only: an EPEL mirror outage must not fail the build
 git init -q /opt/vcpkg
 git -C /opt/vcpkg fetch -q --depth 1 https://github.com/microsoft/vcpkg "$VCPKG_COMMIT"
 git -C /opt/vcpkg checkout -q FETCH_HEAD
