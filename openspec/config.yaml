@@ -1,0 +1,7 @@
+schema: spec-driven
+
+context: |
+  msdf-atlas-gen: the MSDF font atlas generator (library and standalone executable), maintained as an
+  independent fork of Chlumsky/msdf-atlas-gen. Its own rules live in AGENTS.md; its own specs live in
+  openspec/specs. Consumers pin it by commit, or download the published Linux build of a build key.
+  Every commit is either code or infrastructure, never both (see openspec/specs/commit-kinds).
