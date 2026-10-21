@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Self-test: a code-only and an infra-only commit pass, a mixed one fails.
+# Self-test: a code-only and an infra-only commit pass, a mixed one and an unresolvable range fail.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 t=$(mktemp -d); trap 'rm -rf "$t"' EXIT
@@ -15,4 +15,5 @@ echo c > AGENTS.md; echo d > openspec/x.md; git add -A; git commit -qm infra
 ok=$(git rev-parse HEAD)
 echo e >> msdf-atlas-gen/a.cpp; echo f >> AGENTS.md; git commit -qam mixed
 if "$here/check-commit-kinds.sh" "$ok..HEAD"; then echo "FAIL: mixed commit accepted"; exit 1; fi
+if "$here/check-commit-kinds.sh" "refs/heads/missing..HEAD" 2>/dev/null; then echo "FAIL: unresolvable range accepted"; exit 1; fi
 echo "ok"

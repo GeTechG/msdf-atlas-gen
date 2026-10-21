@@ -5,7 +5,8 @@ set -euo pipefail
 range=${1:?usage: check-commit-kinds.sh <rev-range>}
 list=$(git rev-parse --show-toplevel)/.github/infra-paths
 bad=0
-for c in $(git rev-list --no-merges "$range"); do
+commits=$(git rev-list --no-merges "$range") # a range git cannot resolve fails here
+for c in $commits; do
   code=0 infra=0
   while IFS= read -r f; do
     kind=code

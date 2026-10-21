@@ -77,6 +77,8 @@ jobs:
           mv out/msdf-atlas-gen-linux64.tar.gz "$asset"
           sha256sum "$asset"
           git push -f origin "$KEY:refs/tags/builds"
+          # a run for another key may create the release at the same moment: then it exists, go on
           gh release view builds >/dev/null 2>&1 || gh release create builds --verify-tag \
-            --title "msdf-atlas-gen builds" --notes "Linux x86_64 builds with Skia, one file per build key: msdf-atlas-gen-linux64-<key>.tar.gz"
+            --title "msdf-atlas-gen builds" --notes "Linux x86_64 builds with Skia, one file per build key: msdf-atlas-gen-linux64-<key>.tar.gz" \
+            || gh release view builds >/dev/null
           gh release upload builds "$asset"
