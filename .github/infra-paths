@@ -1,0 +1,11 @@
+# Infrastructure paths: files that do not exist upstream (Chlumsky/msdf-atlas-gen).
+# One path per line; a trailing / matches a directory prefix. Everything else is code.
+# A commit touches code or infrastructure, never both (see AGENTS.md).
+# .github/build-linux.sh is the one infrastructure path that moves the build key (AGENTS.md, Builds).
+AGENTS.md
+openspec/
+.github/infra-paths
+.github/scripts/
+.github/workflows/ci.yml
+.github/workflows/binaries.yml
+.github/build-linux.sh
