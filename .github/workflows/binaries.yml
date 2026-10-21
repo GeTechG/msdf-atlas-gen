@@ -66,7 +66,8 @@ jobs:
         if: steps.existing.outputs.found != 'true'
         run: .github/build-linux.sh
 
-      # One release for all builds, one file per build key; its single tag follows the latest build.
+      # One release for all builds, one file per build key. Its tag is created once with the release and stays
+      # put: the workflow token may not push a tag to a commit that changes workflow files.
       # No --clobber: consumers pin the checksum of a published file, and a rebuild would change it.
       - name: Publish the build of the key
         if: steps.existing.outputs.found != 'true'
@@ -76,9 +77,8 @@ jobs:
           asset="out/msdf-atlas-gen-linux64-$KEY.tar.gz"
           mv out/msdf-atlas-gen-linux64.tar.gz "$asset"
           sha256sum "$asset"
-          git push -f origin "$KEY:refs/tags/builds"
           # a run for another key may create the release at the same moment: then it exists, go on
-          gh release view builds >/dev/null 2>&1 || gh release create builds --verify-tag \
+          gh release view builds >/dev/null 2>&1 || gh release create builds --target "$KEY" \
             --title "msdf-atlas-gen builds" --notes "Linux x86_64 builds with Skia, one file per build key: msdf-atlas-gen-linux64-<key>.tar.gz" \
             || gh release view builds >/dev/null
           gh release upload builds "$asset"
