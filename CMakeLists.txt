@@ -10,6 +10,7 @@ option(MSDF_ATLAS_MSDFGEN_EXTERNAL "Do not build the msdfgen submodule but find 
 option(MSDF_ATLAS_INSTALL "Generate installation target" OFF)
 option(MSDF_ATLAS_DYNAMIC_RUNTIME "Link dynamic runtime library instead of static" OFF)
 option(BUILD_SHARED_LIBS "Generate dynamic library files instead of static" OFF)
+set(MSDF_ATLAS_VERSION_SUFFIX "" CACHE STRING "Text appended to the reported version string, e.g. +<revision>")
 
 if(NOT MSDF_ATLAS_MSDFGEN_EXTERNAL)
     set(MSDFGEN_DISABLE_SVG ON CACHE BOOL "Disable unused SVG functionality to minimize dependencies")
@@ -79,6 +80,14 @@ endif()
 
 # Version is specified in vcpkg.json
 project(msdf-atlas-gen VERSION ${MSDF_ATLAS_VERSION} LANGUAGES CXX)
+
+# The suffix only extends the reported version string, the project version stays numeric
+if(MSDF_ATLAS_VERSION_SUFFIX)
+    string(APPEND MSDF_ATLAS_VERSION "${MSDF_ATLAS_VERSION_SUFFIX}")
+    string(LENGTH "${MSDF_ATLAS_VERSION}" MSDF_ATLAS_VERSION_LENGTH)
+    string(REPEAT "-" ${MSDF_ATLAS_VERSION_LENGTH} MSDF_ATLAS_VERSION_UNDERLINE)
+    unset(MSDF_ATLAS_VERSION_LENGTH)
+endif()
 
 if(MSDF_ATLAS_MSDFGEN_EXTERNAL)
     if(NOT TARGET msdfgen::msdfgen)
