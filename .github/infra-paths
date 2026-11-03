@@ -4,6 +4,8 @@
 # .github/build-linux.sh is the one infrastructure path that moves the build key (AGENTS.md, Builds).
 AGENTS.md
 openspec/
+.claude/
+.agents/
 .github/infra-paths
 .github/scripts/
 .github/workflows/ci.yml
