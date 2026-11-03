@@ -5,3 +5,27 @@ context: |
   independent fork of Chlumsky/msdf-atlas-gen. Its own rules live in AGENTS.md; its own specs live in
   openspec/specs. Consumers pin it by commit, or download the published Linux build of a build key.
   Every commit is either code or infrastructure, never both (see openspec/specs/commit-kinds).
+
+# Per-artifact rules — injected only when that artifact is created.
+rules:
+  specs:
+    - A requirement's text is at most 500 characters and states one behaviour with SHALL or MUST; details and
+      edge cases go into its scenarios, a second behaviour into its own requirement.
+    - Scenarios are `####` headings with WHEN/THEN bullets; every requirement has at least one.
+    - A spec states observable behaviour only (what a user, consumer, CI or a command sees), not how it is built.
+    - MODIFIED copies the whole requirement, all its scenarios included; REMOVED gives a Reason and a Migration.
+    - The Purpose of a new spec is at least 50 characters and never the `TBD` placeholder the archive writes.
+  tasks:
+    - Each group of tasks carries its own tests and documentation; every task names how it is checked.
+    - Steps after the tasks (merge, publication, a bump in a consumer) go under `## Workflow follow-up` as plain
+      bullets, not checkboxes.
+    - A step only a human can do stays a checkbox, written `- [ ] N.M [human] …`; agents never tick it.
+
+# Per-operation guidance — injected only into apply / archive. Point at AGENTS.md, never restate it.
+operations:
+  apply:
+    guidance:
+      - Follow AGENTS.md, Workflow steps 2 and 3, and its Commits and Checks sections.
+  archive:
+    guidance:
+      - Follow AGENTS.md, Workflow step 3 (archive as the last commit of the branch) and step 4 (`[human]` tasks).
